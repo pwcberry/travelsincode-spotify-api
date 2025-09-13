@@ -4,7 +4,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node server.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "pretty": "prettier --write ."
