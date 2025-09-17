@@ -1,5 +1,6 @@
 {
   "name": "@brunsnik/travelsincode-spotify-api",
+  "description": "Let's learn how to use the Web API provided by Spotify.",
   "type": "module",
   "private": true,
   "main": "index.js",
@@ -7,13 +8,19 @@
     "start": "node server.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "pretty": "prettier --write ."
+    "pretty": "prettier --write .",
+    "test": "mocha \"test/*.spec.js\""
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
+    "chai": "^6.0.1",
+    "chai-as-promised": "^8.0.2",
     "eslint": "^9.35.0",
+    "eslint-plugin-mocha": "^11.1.0",
     "globals": "^16.4.0",
-    "prettier": "^3.6.2"
+    "mocha": "^11.7.2",
+    "prettier": "^3.6.2",
+    "testdouble": "^3.20.2"
   },
   "packageManager": "yarn@4.9.4",
   "dependencies": {
