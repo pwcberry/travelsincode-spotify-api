@@ -17,7 +17,7 @@ export default defineConfig([
       },
     },
   },
-  mochaPlugin.configs.flat.recommended,
+  mochaPlugin.configs.recommended,
   {
     rules: {
       "mocha/no-mocha-arrows": "off",
