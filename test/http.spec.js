@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { parseCookieHeader } from "../lib/http.js";
+import { parseCookieHeader, clearCookieHeader } from "../lib/http.js";
 
 describe("http", () => {
   describe("parseCookieHeader", () => {
@@ -29,6 +29,19 @@ describe("http", () => {
       assert.containsAllKeys(cookies, ["foo", "id"]);
       assert.isArray(cookies["foo"]);
       assert.deepEqual(cookies["foo"], ["bar", "raz"]);
+    });
+  });
+
+  describe("clearCookieHeader", () => {
+    it("should reset each cookie in the request header", () => {
+      const headers = {
+        cookie: "foo=bar; id=1234",
+      };
+      const responseCookies = clearCookieHeader(headers);
+      assert.isArray(responseCookies);
+      assert.lengthOf(responseCookies, 2);
+      assert.equal(responseCookies[0], "Set-Cookie");
+      assert.deepEqual(responseCookies[1], ["foo=; Max-Age=0", "id=; Max-Age=0"]);
     });
   });
 });
