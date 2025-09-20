@@ -1,24 +1,16 @@
 import "dotenv/config.js";
 import { createServer } from "node:http";
-import process from "node:process";
-import { URL } from "node:url";
-import { readFileSync } from "node:fs";
-import { join, extname } from "node:path";
-import { Buffer, isUtf8 } from "node:buffer";
+import { Buffer } from "node:buffer";
 
-function processRequest(url, headerAccept) {
+function processRequest(url, headers) {
   let statusCode, contentType, data;
 
   try {
+
   } catch (error) {
     contentType = "text/plain";
-    data = "";
-
-    if (error.code === "ENOENT") {
-      statusCode = 404;
-    } else {
-      statusCode = 500;
-    }
+    data = "ERROR";
+    statusCode = 500;
   }
 
   return [statusCode, contentType, data];
@@ -37,7 +29,7 @@ function serve(port) {
       new Map([
         ["Content-Type", contentType],
         ["Content-Length", contentLength],
-      ])
+      ]),
     );
     res.writeHead(statusCode);
 

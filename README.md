@@ -3,4 +3,3 @@
 Let's learn how to use the Web API provided by Spotify.
 
 ## Getting Started
-
