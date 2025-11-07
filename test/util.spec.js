@@ -1,5 +1,6 @@
+import { describe, it } from "mocha";
 import { assert } from "chai";
-import { generateRandomString } from "../lib/util.js";
+import { generateRandomString, generateUUID } from "../lib/util.js";
 
 describe("util", () => {
   describe("generateRandomString", () => {
@@ -8,4 +9,12 @@ describe("util", () => {
       assert.equal(secret.length, 16);
     });
   });
+
+  describe("generateUUID", () => {
+    it("should generate a valid UUID", () => {
+      const uuid = generateUUID();
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      assert.match(uuid, uuidRegex);
+    });
+  })
 });
