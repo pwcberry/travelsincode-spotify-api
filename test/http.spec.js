@@ -22,14 +22,14 @@ describe("http", () => {
       assert.strictEqual(cookies["id"], "1234");
     });
 
-    it("should return an array for multiple cookie keys", () => {
+    it("should overwrite when there multiple cookie keys", () => {
       const headers = {
         cookie: "foo=bar; id=1234; foo=raz",
       };
       const cookies = parseCookieHeader(headers);
       assert.containsAllKeys(cookies, ["foo", "id"]);
-      assert.isArray(cookies["foo"]);
-      assert.deepEqual(cookies["foo"], ["bar", "raz"]);
+      assert.isNotArray(cookies["foo"]);
+      assert.strictEqual(cookies["foo"], "raz");
     });
 
     it("should return an empty object when there are no cookies to parse", () => {
