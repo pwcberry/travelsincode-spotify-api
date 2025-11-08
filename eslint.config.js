@@ -10,7 +10,10 @@ export default defineConfig([
     extends: [js.configs.recommended],
     languageOptions: {
       ecmaVersion: 2021,
-      globals: globals.node,
+      globals: {
+        ...globals.node,
+        td: "readonly",
+      },
       parserOptions: {
         ecmaVersion: "latest",
         sourceType: "module",
