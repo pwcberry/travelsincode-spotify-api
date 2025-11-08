@@ -196,5 +196,14 @@ describe("http", () => {
       expect(responseHeaders).to.have.any.keys("set-cookie");
       expect(responseHeaders.get("set-cookie")).to.deep.equal(["foo=bar"]);
     });
+
+    it("should close the response", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.end = td.func();
+
+      response.redirect(REDIRECT_LOCATION);
+
+      expect(response.end).to.have.been.called;
+    });
   });
 });
