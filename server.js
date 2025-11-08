@@ -1,11 +1,12 @@
-import "dotenv/config.js";
 import { createServer } from "node:http";
-import process from "node:process";
+import { loadEnvFile } from "node:process";
 import { URL } from "node:url";
 import { readFileSync } from "node:fs";
 import { join, extname } from "node:path";
 import { Buffer, isUtf8 } from "node:buffer";
 import { clearCookieHeader } from "./lib/http.js";
+
+loadEnvFile();
 
 /**
  *
