@@ -16,14 +16,15 @@ describe("controller", () => {
     let response, utilModule, module, originalEnv;
 
     beforeEach(async () => {
+      response = td.object(["setHeaders", "writeHead", "end"]);
+
       utilModule = await td.replaceEsm("../lib/util.js");
       td.when(utilModule.generateRandomString()).thenReturn("ABCDEFGHIJ");
 
-      module = await import("../lib/controller.js");
-      response = td.object(["setHeaders", "writeHead", "end"]);
-
       originalEnv = { ...process.env };
       process.env["SPOTIFY_CLIENT_ID"] = SPOTIFY_CLIENT_ID;
+
+      module = await import("../lib/controller.js");
     });
 
     afterEach(() => {
