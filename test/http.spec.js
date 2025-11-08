@@ -1,6 +1,7 @@
-import { describe, it } from "mocha";
+import { afterEach, beforeEach, describe, it } from "mocha";
 import { assert } from "chai";
-import { clearCookieHeader, parseCookieHeader, setCookieHeader } from "../lib/http.js";
+import { clearCookieHeader, HttpRequest, parseCookieHeader, setCookieHeader } from "../lib/http.js";
+import createMockSocket from "./mocks/socket.js";
 
 describe("http", () => {
   describe("parseCookieHeader", () => {
@@ -94,6 +95,52 @@ describe("http", () => {
       assert.deepEqual(responseCookies[1], ["Set-Cookie", "id=1234"]);
       assert.deepEqual(responseCookies[2], ["Set-Cookie", "state=sleep"]);
       assert.deepEqual(responseCookies[3], ["Set-Cookie", "client=dreaming"]);
+    });
+  });
+
+  describe("HttpRequest", () => {
+    const HOST = "http://localhost:4000";
+    let originalEnv, socket;
+
+    beforeEach(() => {
+      socket = createMockSocket();
+      originalEnv = { ...process.env };
+      process.env["HOST"] = HOST;
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it("should reveal the cookies in the request", () => {
+      const request = new HttpRequest(socket);
+      request.headers = { cookie: "foo=bar; id=1234" };
+
+      const cookies = request.cookies;
+      assert.isDefined(cookies);
+      assert.containsAllKeys(cookies, ["foo", "id"]);
+      assert.equal(cookies["foo"], "bar");
+      assert.equal(cookies["id"], "1234");
+    });
+
+    it("should reveal the query string parameters", () => {
+      const request = new HttpRequest(socket);
+      request.url = "/api/user?id=123&timeout=2000";
+
+      const query = request.query;
+      assert.isDefined(query);
+      assert.containsAllKeys(query, ["timeout", "id"]);
+      assert.strictEqual(query["id"], "123");
+      assert.strictEqual(query["timeout"], "2000");
+    });
+
+    it("should reveal the path name", () => {
+      const request = new HttpRequest(socket);
+      request.url = "/api/user?id=123&timeout=2000";
+
+      const pathname = request.pathname;
+      assert.isDefined(pathname);
+      assert.strictEqual(pathname, "/api/user");
     });
   });
 });
