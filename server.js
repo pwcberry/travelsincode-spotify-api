@@ -1,42 +1,44 @@
 import { createServer } from "node:http";
 import { loadEnvFile } from "node:process";
-import { URL } from "node:url";
-import { readFileSync } from "node:fs";
-import { join, extname } from "node:path";
-import { Buffer, isUtf8 } from "node:buffer";
-import { clearCookieHeader } from "./lib/http.js";
+// import { readFileSync } from "node:fs";
+// import { join, extname } from "node:path";
+import { Buffer } from "node:buffer";
+import { HttpRequest, HttpResponse } from "./lib/http.js";
 
 loadEnvFile();
 
 /**
  *
- * @param url {URL} The request URL
- * @param httpHeaders {Object} The HTTP headers of the request
- * @param httpHeaders.[cookie] {string} The HTTP cookie attached to the request
- * @returns {[number,string,string[]]} A tuple containing the HTTP status code, the HTML to return, and the cookie to set in the response
+ * @param request {HttpRequest} The request
+ * @returns {[number,string,string[][]]} A tuple containing the HTTP status code, the HTML to return, and the cookie to set in the response
  */
-function processRequest(url, httpHeaders) {
+function processRequest(request) {
   let statusCode, httpCookies, data;
 
   try {
-    const { pathname } = url;
-    switch (pathname.toLowerCase()) {
+    switch (request.pathname.toLowerCase()) {
       case "/login":
-        httpCookies = ["Set-Cookie", "foo=barred; id=456"];
+        httpCookies = [
+          ["foo", "barred"],
+          ["id", "456"],
+        ];
         return [200, "<p>LOGIN</p>", httpCookies];
       case "/callback":
-        httpCookies = ["Set-Cookie", "foo=bar; tid=987"];
+        httpCookies = [
+          ["foo", "bar"],
+          ["tid", "987"],
+        ];
         return [200, '<p style="color:white;background:darkmagenta">CALLBACK</p>', httpCookies];
       case "/":
-        return [200, "<p>HELLO WORLD</p>", clearCookieHeader(httpHeaders)];
+        return [200, "<p>HELLO WORLD</p>", ""];
       default:
-        httpCookies = ["Set-Cookie", []];
+        httpCookies = [];
         statusCode = 404;
         data = '<html lang="en"><title>Page not found</title><body><p>Page not found</p></body></html>';
         break;
     }
   } catch (error) {
-    httpCookies = ["Set-Cookie", []];
+    httpCookies = [];
 
     if (error.code === "ENOENT") {
       statusCode = 404;
@@ -51,18 +53,30 @@ function processRequest(url, httpHeaders) {
 }
 
 function serve(port) {
-  const server = createServer({ keepAliveTimeout: 30000 }, (req, res) => {
-    // This script will always handle requests made with the HTTP protocol from localhost
-    const requestUrl = new URL(req.url, `http://127.0.0.1`);
-    const [statusCode, data, httpCookies] = processRequest(requestUrl, req.headers);
-    const contentLength = Buffer.byteLength(data, "utf8");
+  const server = createServer(
+    { keepAliveTimeout: 30000, IncomingMessage: HttpRequest, ServerResponse: HttpResponse },
+    (req, res) => {
+      // This script will always handle requests made with the HTTP protocol from localhost
+      const [statusCode, data, httpCookies] = processRequest(req);
+      const contentLength = Buffer.byteLength(data, "utf8");
 
-    res.setHeaders(new Map([["Content-Type", "text/html"], ["Content-Length", contentLength], httpCookies]));
-    res.writeHead(statusCode);
+      res.setHeaders(
+        new Map([
+          ["Content-Type", "text/html"],
+          ["Content-Length", contentLength],
+        ])
+      );
+      if (httpCookies.length > 0) {
+        res.setCookies(httpCookies);
+      } else {
+        res.clearCookies();
+      }
+      res.writeHead(statusCode);
 
-    res.write(data);
-    res.end("\n");
-  });
+      res.write(data);
+      res.end("\n");
+    }
+  );
 
   console.log("Listening on port:", port);
   server.listen(port);
