@@ -1,3 +1,4 @@
+import process from "node:process";
 import { afterEach, beforeEach, describe, it } from "mocha";
 import { assert, expect, use } from "chai";
 import * as td from "testdouble";
@@ -61,6 +62,13 @@ describe("http", () => {
       const pathname = request.pathname;
       assert.isDefined(pathname);
       assert.strictEqual(pathname, "/api/user");
+    });
+
+    it("should provide access to environment variables", () => {
+      const request = new HttpRequest(socket);
+
+      assert.isDefined(request.context.env);
+      assert.strictEqual(request.context.env["HOST"], HOST);
     });
   });
 

@@ -1,28 +1,33 @@
+import process from "node:process";
 import { afterEach, beforeEach, describe, it } from "mocha";
 import { expect, use } from "chai";
 import * as td from "testdouble";
 import tdChai from "testdouble-chai";
+import { HttpRequest } from "../lib/http.js";
 
 // Add the testdouble extension for Chai
 use(tdChai(td));
 
 const SPOTIFY_CLIENT_ID = "spotify-client-id";
+const REDIRECT_URI = "http://localhost:4000";
 
 describe("controller", () => {
   describe("#handleLoginRequest", () => {
-    const REDIRECT_URI = "http://localhost:4000";
-
     let request, response, utilModule, module, originalEnv;
 
     beforeEach(async () => {
-      request = td.object(["cookies"]);
+      originalEnv = { ...process.env };
+      process.env[""] = REDIRECT_URI;
+      process.env["SPOTIFY_CLIENT_ID"] = SPOTIFY_CLIENT_ID;
+
+      // The request object doesn't need to be mocked
+      request = new HttpRequest({});
+
+      // We need to check the controller does use the response methods
       response = td.object(["redirect", "setCookie"]);
 
       utilModule = await td.replaceEsm("../lib/util.js");
       td.when(utilModule.generateRandomString()).thenReturn("ABCDEFGHIJ");
-
-      originalEnv = { ...process.env };
-      process.env["SPOTIFY_CLIENT_ID"] = SPOTIFY_CLIENT_ID;
 
       module = await import("../lib/controller.js");
     });
