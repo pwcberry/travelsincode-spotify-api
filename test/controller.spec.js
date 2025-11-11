@@ -17,8 +17,9 @@ describe("controller", () => {
 
     beforeEach(async () => {
       originalEnv = { ...process.env };
-      process.env[""] = REDIRECT_URI;
+      process.env["HOST"] = REDIRECT_URI;
       process.env["SPOTIFY_CLIENT_ID"] = SPOTIFY_CLIENT_ID;
+      process.env["REDIRECT_URI"] = REDIRECT_URI;
 
       // The request object doesn't need to be mocked
       request = new HttpRequest({});
@@ -84,4 +85,6 @@ describe("controller", () => {
       expect(value).to.equal("ABCDEFGHIJ");
     });
   });
+
+  describe("#callback", () => {});
 });
