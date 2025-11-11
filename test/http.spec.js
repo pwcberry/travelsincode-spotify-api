@@ -167,6 +167,17 @@ describe("http", () => {
       assert.lengthOf(Object.keys(response.cookies), 0);
     });
 
+    it("should clear only the specified cookie", () => {
+      request.headers = {
+        cookie: "foo=bar; id=1234",
+      };
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.clearCookie("foo");
+
+      const headers = response.getHeaders();
+      assert.deepEqual(headers["set-cookie"], ["foo=; Max-Age=0", "id=1234"]);
+    });
+
     it("should set the status code to 307 when redirecting", () => {
       const response = new HttpResponse(request, EMPTY_OPTIONS);
       response.writeHead = td.func();
