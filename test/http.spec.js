@@ -204,9 +204,8 @@ describe("http", () => {
     it("should retain the cookies set before the redirect", () => {
       const captor = td.matchers.captor();
       const response = new HttpResponse(request, EMPTY_OPTIONS);
-      response.setCookie("foo", "bar");
       response.setHeaders = td.func();
-
+      response.setCookie("foo", "bar");
       response.redirect(REDIRECT_LOCATION);
       td.verify(response.setHeaders(captor.capture()));
 
