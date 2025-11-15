@@ -223,5 +223,70 @@ describe("http", () => {
 
       expect(response.end).to.have.been.called;
     });
+
+    it("should write JSON into the response stream", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeOutput = td.func();
+      const captor = td.matchers.captor();
+
+      const dataToSend = { foo: "bar" };
+      response.sendJson(dataToSend);
+      td.verify(response.writeOutput(captor.capture(), captor.capture()));
+
+      const [content, contentType] = [...captor.values];
+      expect(content).to.equal(JSON.stringify({ data: dataToSend }));
+      expect(contentType).to.equal("application/json");
+    });
+
+    it("should write HTML into the response stream", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeOutput = td.func();
+      const captor = td.matchers.captor();
+
+      const htmlToSend = "<html lang='en'><h1>Hello world</h1></html>";
+      response.sendHtml(htmlToSend);
+      td.verify(response.writeOutput(captor.capture(), captor.capture()));
+
+      const [content, contentType] = [...captor.values];
+      expect(content).to.equal(htmlToSend);
+      expect(contentType).to.equal("text/html");
+    });
+
+    it("should append HTTP headers and retain existing headers", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+
+      response.setHeader("content-type", "text/html");
+      response.appendHeaders([["etag", "12345678"]]);
+
+      const headers = response.getHeaders();
+      expect(headers["content-type"]).to.equal("text/html");
+      expect(headers["etag"]).to.equal("12345678");
+    });
+
+    it("should set a NOT FOUND status", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeHead = td.func();
+      const captor = td.matchers.captor();
+
+      response.setNotFound();
+      td.verify(response.writeHead(captor.capture(), captor.capture()));
+
+      const [code, status] = [...captor.values];
+      expect(code).to.equal(404);
+      expect(status).to.equal("Not Found");
+    });
+
+    it("should set a INTERNAL SERVER ERROR status", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeHead = td.func();
+      const captor = td.matchers.captor();
+
+      response.setServerError();
+      td.verify(response.writeHead(captor.capture(), captor.capture()));
+
+      const [code, status] = [...captor.values];
+      expect(code).to.equal(500);
+      expect(status).to.equal("Internal Server Error");
+    });
   });
 });

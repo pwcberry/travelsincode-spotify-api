@@ -13,7 +13,7 @@ function serve(port) {
         const [statusCode, content] = await readFileForWeb("index.html");
         switch (statusCode) {
           case 200:
-            response.writeHtml(content);
+            response.sendHtml(content);
             break;
           case 404:
             response.setNotFound();
