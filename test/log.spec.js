@@ -87,6 +87,35 @@ describe("log", function () {
       expect(logEntry).to.contain("accepts");
     });
 
+    it("should write out the log entry with the port number for the request", () => {
+      td.when(nodeFs.readdirSync(td.matchers.isA(String))).thenReturn([]);
+      td.when(nodeFs.existsSync(td.matchers.contains(".log"))).thenReturn(false);
+      const captor = td.matchers.captor();
+
+      const urlWithPort = new URL(`${requestUrl.origin}:8443`);
+      const logger = module.default();
+      logger.request(urlWithPort, requestHeaders);
+      td.verify(nodeFs.writeFileSync(td.matchers.isA(String), captor.capture(), td.matchers.isA(Object)));
+
+      const logEntry = captor.values[0];
+      expect(logEntry).to.contain('"port":"8443"');
+    });
+
+    it("should write out the log entry with the query string parameters with the request", () => {
+      td.when(nodeFs.readdirSync(td.matchers.isA(String))).thenReturn([]);
+      td.when(nodeFs.existsSync(td.matchers.contains(".log"))).thenReturn(false);
+      const captor = td.matchers.captor();
+
+      requestUrl.searchParams.set("foo", "bar");
+      requestUrl.searchParams.set("baz", "123");
+      const logger = module.default();
+      logger.request(requestUrl, requestHeaders);
+      td.verify(nodeFs.writeFileSync(td.matchers.isA(String), captor.capture(), td.matchers.isA(Object)));
+
+      const logEntry = captor.values[0];
+      expect(logEntry).to.contain('"query":{"foo":"bar","baz":"123"}');
+    });
+
     it("should append to an existing log file", () => {
       td.when(nodeFs.readdirSync(td.matchers.isA(String))).thenReturn(["data.json", "file.log"]);
       td.when(nodeFs.statSync(td.matchers.contains(".log"))).thenReturn({
