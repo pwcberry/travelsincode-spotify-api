@@ -1,5 +1,7 @@
-import { createServer } from "node:http";
+import { createServer } from "node:https";
 import { loadEnvFile } from "node:process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { HttpRequest, HttpResponse } from "./lib/http.js";
 import getLogger from "./lib/log.js";
 import * as controller from "./lib/controller.js";
@@ -9,31 +11,36 @@ loadEnvFile();
 function serve(port) {
   const logger = getLogger();
 
-  const server = createServer(
-    { keepAliveTimeout: 30000, IncomingMessage: HttpRequest, ServerResponse: HttpResponse },
-    async (request, response) => {
-      logger.request(request.requestUrl, request.headers);
+  const options = {
+    keepAliveTimeout: 30000,
+    IncomingMessage: HttpRequest,
+    ServerResponse: HttpResponse,
+    key: readFileSync(join(process.cwd(), "cert/private-key.pen")),
+    cert: readFileSync(join(process.cwd(), "cert/certificate.pem")),
+  };
 
-      switch (request.pathname) {
-        case "/":
-          await controller.indexPage(request, response);
-          break;
-        case "/login":
-          await controller.loginRequest(request, response);
-          break;
-        case "/callback":
-          await controller.spotifyCallback(request, response);
-          break;
-        default:
-          logger.error(`Page ${request.pathname} not found`);
-          response.setNotFound();
-          break;
-      }
+  const server = createServer(options, async (request, response) => {
+    logger.request(request.requestUrl, request.headers);
+
+    switch (request.pathname) {
+      case "/":
+        await controller.indexPage(request, response);
+        break;
+      case "/login":
+        await controller.loginRequest(request, response);
+        break;
+      case "/callback":
+        await controller.spotifyCallback(request, response);
+        break;
+      default:
+        logger.error(`Page ${request.pathname} not found`);
+        response.setNotFound();
+        break;
     }
-  );
+  });
 
   logger.info("Listening on port: " + port);
   server.listen(port);
 }
 
-serve(4000);
+serve(443);
