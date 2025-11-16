@@ -12,7 +12,7 @@ const SPOTIFY_CLIENT_ID = "spotify-client-id";
 const REDIRECT_URI = "http://localhost:4000";
 
 describe("controller", () => {
-  describe("#handleLoginRequest", () => {
+  describe("#loginRequest", () => {
     let request, response, utilModule, module, originalEnv;
 
     beforeEach(async () => {
@@ -42,10 +42,10 @@ describe("controller", () => {
       td.reset();
     });
 
-    it("should set a location for the redirect", () => {
+    it("should set a location for the redirect", async () => {
       const captor = td.matchers.captor();
 
-      module.handleLoginRequest(request, response, REDIRECT_URI);
+      await module.loginRequest(request, response, REDIRECT_URI);
       td.verify(response.redirect(captor.capture()));
 
       expect(response.redirect).to.have.been.called;
@@ -54,10 +54,10 @@ describe("controller", () => {
       expect(redirectLocation.toString()).to.include("accounts.spotify.com/authorize");
     });
 
-    it("should set the return URI for the Spotify API call", () => {
+    it("should set the return URI for the Spotify API call", async () => {
       const captor = td.matchers.captor();
 
-      module.handleLoginRequest(request, response, REDIRECT_URI);
+      await module.loginRequest(request, response, REDIRECT_URI);
       td.verify(response.redirect(captor.capture()));
 
       const redirectLocation = captor.values[0];
@@ -65,10 +65,10 @@ describe("controller", () => {
       expect(redirectLocation.searchParams.get("redirect_uri")).to.equal(REDIRECT_URI);
     });
 
-    it("should set the Spotify Client ID for the Spotify API call", () => {
+    it("should set the Spotify Client ID for the Spotify API call", async () => {
       const captor = td.matchers.captor();
 
-      module.handleLoginRequest(request, response, REDIRECT_URI);
+      await module.loginRequest(request, response, REDIRECT_URI);
       td.verify(response.redirect(captor.capture()));
 
       const redirectLocation = captor.values[0];
@@ -76,10 +76,10 @@ describe("controller", () => {
       expect(redirectLocation.searchParams.get("client_id")).to.equal(SPOTIFY_CLIENT_ID);
     });
 
-    it("should set a state cookie", () => {
+    it("should set a state cookie", async () => {
       const captor = td.matchers.captor();
 
-      module.handleLoginRequest(request, response, REDIRECT_URI);
+      await module.loginRequest(request, response, REDIRECT_URI);
       td.verify(response.setCookie(captor.capture(), captor.capture()));
 
       expect(response.setCookie).to.have.been.called;
@@ -90,5 +90,5 @@ describe("controller", () => {
     });
   });
 
-  describe("#callback", () => {});
+  describe("#spotifyCallback", () => {});
 });

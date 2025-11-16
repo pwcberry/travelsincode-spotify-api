@@ -3,8 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <title>Spotify API</title>
+    <script>
+      window.addEventListener("load", () => {
+        if (!window.TOKENS) {
+          const element = document.createElement("h2");
+          element.style.color = "fuchsia";
+          element.textContent = "You need to sign into Spotify API";
+          document.body.appendChild(element);
+        }
+      })
+    </script>
   </head>
   <body>
     <h1>Spotify API</h1>
+  <!-- INSERT TOKENS -->
   </body>
 </html>

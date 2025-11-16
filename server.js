@@ -1,8 +1,8 @@
 import { createServer } from "node:http";
 import { loadEnvFile } from "node:process";
 import { HttpRequest, HttpResponse } from "./lib/http.js";
-import { readFileForWeb } from "./lib/fs.js";
 import getLogger from "./lib/log.js";
+import * as controller from "./lib/controller.js";
 
 loadEnvFile();
 
@@ -14,21 +14,19 @@ function serve(port) {
     async (request, response) => {
       logger.request(request.requestUrl, request.headers);
 
-      if (request.pathname === "/") {
-        const [statusCode, content] = await readFileForWeb("index.html");
-        switch (statusCode) {
-          case 200:
-            response.sendHtml(content);
-            break;
-          case 404:
-            response.setNotFound();
-            break;
-          case 500:
-            response.setServerError();
-            break;
-        }
-      } else {
-        response.setNotFound();
+      switch (request.pathname) {
+        case "/":
+          await controller.indexPage(request, response);
+          break;
+        case "/login":
+          await controller.loginRequest(request, response);
+          break;
+        case "/callback":
+          await controller.spotifyCallback(request, response);
+          break;
+        default:
+          response.setNotFound();
+          break;
       }
     }
   );
