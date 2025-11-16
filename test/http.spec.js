@@ -266,27 +266,25 @@ describe("http", () => {
     it("should set a NOT FOUND status", () => {
       const response = new HttpResponse(request, EMPTY_OPTIONS);
       response.writeHead = td.func();
-      const captor = td.matchers.captor();
 
       response.setNotFound();
-      td.verify(response.writeHead(captor.capture(), captor.capture()));
+      td.verify(response.writeHead(404, "Not Found"));
+    });
 
-      const [code, status] = [...captor.values];
-      expect(code).to.equal(404);
-      expect(status).to.equal("Not Found");
+    it("should set a BAD REQUEST status", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeHead = td.func();
+
+      response.setBadRequest();
+      td.verify(response.writeHead(400, "Bad Request"));
     });
 
     it("should set a INTERNAL SERVER ERROR status", () => {
       const response = new HttpResponse(request, EMPTY_OPTIONS);
       response.writeHead = td.func();
-      const captor = td.matchers.captor();
 
       response.setServerError();
-      td.verify(response.writeHead(captor.capture(), captor.capture()));
-
-      const [code, status] = [...captor.values];
-      expect(code).to.equal(500);
-      expect(status).to.equal("Internal Server Error");
+      td.verify(response.writeHead(500, "Internal Server Error"));
     });
   });
 });
