@@ -9,7 +9,7 @@ import { HttpRequest } from "../lib/http.js";
 use(tdChai(td));
 
 const SPOTIFY_CLIENT_ID = "spotify-client-id";
-const REDIRECT_URI = "http://localhost:4000";
+const REDIRECT_URI = "https://users.spotify.app";
 
 describe("controller", () => {
   describe("#loginRequest", () => {
@@ -22,6 +22,7 @@ describe("controller", () => {
       process.env["REDIRECT_URI"] = REDIRECT_URI;
 
       // Let's mock Node libraries
+      await td.replaceEsm("node:fs");
       await td.replaceEsm("node:fs/promises");
       await td.replaceEsm("node:path");
 
@@ -45,7 +46,7 @@ describe("controller", () => {
     it("should set a location for the redirect", async () => {
       const captor = td.matchers.captor();
 
-      await module.loginRequest(request, response, REDIRECT_URI);
+      await module.loginRequest(request, response);
       td.verify(response.redirect(captor.capture()));
 
       expect(response.redirect).to.have.been.called;
@@ -57,7 +58,7 @@ describe("controller", () => {
     it("should set the return URI for the Spotify API call", async () => {
       const captor = td.matchers.captor();
 
-      await module.loginRequest(request, response, REDIRECT_URI);
+      await module.loginRequest(request, response);
       td.verify(response.redirect(captor.capture()));
 
       const redirectLocation = captor.values[0];
@@ -68,7 +69,7 @@ describe("controller", () => {
     it("should set the Spotify Client ID for the Spotify API call", async () => {
       const captor = td.matchers.captor();
 
-      await module.loginRequest(request, response, REDIRECT_URI);
+      await module.loginRequest(request, response);
       td.verify(response.redirect(captor.capture()));
 
       const redirectLocation = captor.values[0];
