@@ -55,6 +55,12 @@ describe("http", () => {
       assert.strictEqual(query["timeout"], "2000");
     });
 
+    it("should reveal query with no keys when there are no parameters", () => {
+      const request = new HttpRequest(socket);
+      request.url = "/api/user";
+      assert.isEmpty(request.query);
+    });
+
     it("should reveal the path name", () => {
       const request = new HttpRequest(socket);
       request.url = "/api/user?id=123&timeout=2000";
