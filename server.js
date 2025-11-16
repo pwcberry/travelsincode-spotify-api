@@ -15,8 +15,8 @@ function serve(port) {
     keepAliveTimeout: 30000,
     IncomingMessage: HttpRequest,
     ServerResponse: HttpResponse,
-    key: readFileSync(join(process.cwd(), "cert/private-key.pen")),
-    cert: readFileSync(join(process.cwd(), "cert/certificate.pem")),
+    key: readFileSync(join(process.cwd(), "cert/selfsigned.key")),
+    cert: readFileSync(join(process.cwd(), "cert/selfsigned.pem")),
   };
 
   const server = createServer(options, async (request, response) => {
@@ -33,7 +33,7 @@ function serve(port) {
         await controller.spotifyCallback(request, response);
         break;
       default:
-        logger.error(`Page ${request.pathname} not found`);
+        logger.error(`Resource ${request.pathname} not found`);
         response.setNotFound();
         break;
     }
