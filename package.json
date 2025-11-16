@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "pretty": "prettier --write .",
-    "test": "mocha \"test/*.spec.js\""
+    "test": "MODE=TEST mocha \"test/*.spec.js\""
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",

@@ -49,15 +49,12 @@ describe("log", function () {
   });
 
   describe("Logger#request", () => {
-    let requestUrl, requestHeaders, responseHeaders;
+    let requestUrl, requestHeaders;
 
     beforeEach(() => {
       requestUrl = new URL("login", "https://spotify.travelsincode.com");
       requestHeaders = {
         accepts: "*",
-      };
-      responseHeaders = {
-        "content-type": "text/html",
       };
       td.when(nodeFs.existsSync(td.matchers.contains("data"))).thenReturn(true);
     });
@@ -69,10 +66,10 @@ describe("log", function () {
 
       const logger = module.default();
 
-      logger.request(requestUrl, requestHeaders, responseHeaders);
+      logger.request(requestUrl, requestHeaders);
       td.verify(nodeFs.writeFileSync(captor.capture(), td.matchers.isA(String), td.matchers.isA(Object)));
 
-      expect(captor.values[0]).to.contain("requests-00.log");
+      expect(captor.values[0]).to.contain("app-00.log");
     });
 
     it("should write out the log entry with request data", () => {
@@ -81,19 +78,17 @@ describe("log", function () {
       const captor = td.matchers.captor();
 
       const logger = module.default();
-      logger.request(requestUrl, requestHeaders, responseHeaders);
+      logger.request(requestUrl, requestHeaders);
       td.verify(nodeFs.writeFileSync(td.matchers.isA(String), captor.capture(), td.matchers.isA(Object)));
 
       const logEntry = captor.values[0];
       expect(logEntry).to.contain("REQUEST: ");
       expect(logEntry).to.contain(requestUrl.hostname);
       expect(logEntry).to.contain("accepts");
-      expect(logEntry).to.contain("content-type");
     });
 
     it("should append to an existing log file", () => {
       td.when(nodeFs.readdirSync(td.matchers.isA(String))).thenReturn(["data.json", "file.log"]);
-      td.when(nodeFs.existsSync(td.matchers.contains(".log"))).thenReturn(true);
       td.when(nodeFs.statSync(td.matchers.contains(".log"))).thenReturn({
         isFile() {
           return true;
@@ -102,9 +97,29 @@ describe("log", function () {
       });
 
       const logger = module.default();
-      logger.request(requestUrl, requestHeaders, responseHeaders);
+      logger.request(requestUrl, requestHeaders);
 
       expect(nodeFs.appendFileSync).to.have.been.called;
+    });
+
+    it("should write to a log file with an index of 10 or greater in the name", () => {
+      td.when(nodeFs.readdirSync(td.matchers.isA(String))).thenReturn(
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `app-0${n}.log`)
+      );
+      td.when(nodeFs.statSync(td.matchers.contains(".log"))).thenReturn({
+        isFile() {
+          return true;
+        },
+        size: 1.2e6,
+      });
+      const captor = td.matchers.captor();
+
+      const logger = module.default();
+      logger.request(requestUrl, requestHeaders);
+
+      td.verify(nodeFs.writeFileSync(captor.capture(), td.matchers.isA(String), td.matchers.isA(Object)));
+
+      expect(captor.values[0]).to.contain("app-10.log");
     });
 
     it("should create a new log file when the last one is too big", () => {
@@ -119,11 +134,11 @@ describe("log", function () {
       const captor = td.matchers.captor();
 
       const logger = module.default();
-      logger.request(requestUrl, requestHeaders, responseHeaders);
+      logger.request(requestUrl, requestHeaders);
 
       td.verify(nodeFs.writeFileSync(captor.capture(), td.matchers.isA(String), td.matchers.isA(Object)));
 
-      expect(captor.values[0]).to.contain("requests-01.log");
+      expect(captor.values[0]).to.contain("app-01.log");
     });
   });
 
