@@ -6,16 +6,19 @@
     <script>
       window.addEventListener("load", () => {
         if (!window.TOKENS) {
-          const element = document.createElement("h2");
-          element.style.color = "fuchsia";
-          element.textContent = "You need to sign into Spotify API";
-          document.body.appendChild(element);
+          const element = document.querySelector("h2");
+          element.style.display = "block";
+
+          const page = new URL(location.href);
+          const loginPage = new URL("login", page.origin);
+          location.href = loginPage.toString();
         }
       })
     </script>
   </head>
   <body>
     <h1>Spotify API</h1>
+    <h2 style="color:fuchsia;display:none">You need to sign in to the Spotify API</h2>
   <!-- INSERT TOKENS -->
   </body>
 </html>

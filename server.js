@@ -25,6 +25,7 @@ function serve(port) {
           await controller.spotifyCallback(request, response);
           break;
         default:
+          logger.error(`Page ${request.pathname} not found`);
           response.setNotFound();
           break;
       }
