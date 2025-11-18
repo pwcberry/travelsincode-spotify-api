@@ -26,6 +26,12 @@ function serve(port) {
       case "/":
         await controller.indexPage(request, response);
         break;
+      case "/dashboard":
+        await controller.dashboardPage(request, response);
+        break;
+      case "/error":
+        await controller.errorPage(request, response);
+        break;
       case "/login":
         await controller.loginRequest(request, response);
         break;
