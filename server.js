@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { HttpRequest, HttpResponse } from "./lib/http.js";
 import getLogger from "./lib/log.js";
 import * as controller from "./lib/controller.js";
+import { loadAsset } from "./lib/asset.js";
 
 loadEnvFile();
 
@@ -39,8 +40,12 @@ function serve(port) {
         await controller.spotifyCallback(request, response);
         break;
       default:
-        logger.error(`Resource ${request.pathname} not found`);
-        response.setNotFound();
+        if (/^\/assets/.test(request.pathname)) {
+          await loadAsset(request, response);
+        } else {
+          logger.error(`Resource ${request.pathname} not found`);
+          response.setNotFound();
+        }
         break;
     }
   });
