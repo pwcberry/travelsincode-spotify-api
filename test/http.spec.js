@@ -1,48 +1,296 @@
-import { describe, it } from "mocha";
-import { assert } from "chai";
-import { parseCookieHeader, clearCookieHeader } from "../lib/http.js";
+import process from "node:process";
+import { afterEach, beforeEach, describe, it } from "mocha";
+import { assert, expect, use } from "chai";
+import * as td from "testdouble";
+import tdChai from "testdouble-chai";
+import { HttpRequest, HttpResponse } from "../lib/http.js";
+import createMockSocket from "./mocks/socket.js";
+
+// Add the testdouble extension for Chai
+use(tdChai(td));
 
 describe("http", () => {
-  describe("parseCookieHeader", () => {
-    it("should extract exactly one cookie", () => {
-      const headers = {
-        cookie: "foo=bar",
-      };
-      const cookies = parseCookieHeader(headers);
-      assert.containsAllKeys(cookies, ["foo"]);
-      assert.strictEqual(cookies["foo"], "bar");
+  describe("HttpRequest", () => {
+    const HOST = "http://localhost:4000";
+    let originalEnv, socket;
+
+    beforeEach(() => {
+      socket = createMockSocket();
+      originalEnv = { ...process.env };
+      process.env["HOST"] = HOST;
     });
 
-    it("should extract two separate cookies", () => {
-      const headers = {
-        cookie: "foo=bar; id=1234",
-      };
-      const cookies = parseCookieHeader(headers);
-      assert.containsAllKeys(cookies, ["foo", "id"]);
-      assert.strictEqual(cookies["id"], "1234");
+    afterEach(() => {
+      process.env = originalEnv;
     });
 
-    it("should return an array for multiple cookie keys", () => {
-      const headers = {
-        cookie: "foo=bar; id=1234; foo=raz",
-      };
-      const cookies = parseCookieHeader(headers);
+    it("should reveal the cookies in the request", () => {
+      const request = new HttpRequest(socket);
+      request.headers = { cookie: "foo=bar; id=1234" };
+
+      const cookies = request.cookies;
+      assert.isDefined(cookies);
       assert.containsAllKeys(cookies, ["foo", "id"]);
-      assert.isArray(cookies["foo"]);
-      assert.deepEqual(cookies["foo"], ["bar", "raz"]);
+      assert.equal(cookies["foo"], "bar");
+      assert.equal(cookies["id"], "1234");
+    });
+
+    it("should return an empty object when there are no cookies in the request", () => {
+      const request = new HttpRequest(socket);
+      request.headers = {};
+
+      const cookies = request.cookies;
+      assert.isDefined(cookies);
+      assert.lengthOf(Object.keys(cookies), 0);
+    });
+
+    it("should reveal the query string parameters", () => {
+      const request = new HttpRequest(socket);
+      request.url = "/api/user?id=123&timeout=2000";
+
+      const query = request.query;
+      assert.isDefined(query);
+      assert.containsAllKeys(query, ["timeout", "id"]);
+      assert.strictEqual(query["id"], "123");
+      assert.strictEqual(query["timeout"], "2000");
+    });
+
+    it("should reveal query with no keys when there are no parameters", () => {
+      const request = new HttpRequest(socket);
+      request.url = "/api/user";
+      assert.isEmpty(request.query);
+    });
+
+    it("should reveal the path name", () => {
+      const request = new HttpRequest(socket);
+      request.url = "/api/user?id=123&timeout=2000";
+
+      const pathname = request.pathname;
+      assert.isDefined(pathname);
+      assert.strictEqual(pathname, "/api/user");
+    });
+
+    it("should provide access to environment variables", () => {
+      const request = new HttpRequest(socket);
+
+      assert.isDefined(request.context.env);
+      assert.strictEqual(request.context.env["HOST"], HOST);
     });
   });
 
-  describe("clearCookieHeader", () => {
-    it("should reset each cookie in the request header", () => {
-      const headers = {
+  describe("HttpResponse", () => {
+    const EMPTY_OPTIONS = {};
+    const REDIRECT_LOCATION = "https://accounts.spotify.com";
+    let request, socket;
+
+    beforeEach(() => {
+      socket = createMockSocket();
+      request = new HttpRequest(socket);
+    });
+
+    it("should reveal the cookies in the request", () => {
+      request.headers = { cookie: "foo=bar; id=1234" };
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+
+      const cookies = response.cookies;
+      assert.isDefined(cookies);
+      assert.containsAllKeys(cookies, ["foo", "id"]);
+      assert.strictEqual(cookies["foo"], "bar");
+      assert.strictEqual(cookies["id"], "1234");
+    });
+
+    it("should have no cookies when there are no cookies in the request", () => {
+      request.headers = {};
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+
+      const cookies = response.cookies;
+      assert.isDefined(cookies);
+      assert.lengthOf(Object.keys(cookies), 0);
+    });
+
+    it("should set additional cookies to cookies present in the request", () => {
+      request.headers = {
         cookie: "foo=bar; id=1234",
       };
-      const responseCookies = clearCookieHeader(headers);
-      assert.isArray(responseCookies);
-      assert.lengthOf(responseCookies, 2);
-      assert.equal(responseCookies[0], "Set-Cookie");
-      assert.deepEqual(responseCookies[1], ["foo=; Max-Age=0", "id=; Max-Age=0"]);
+      const newCookies = [
+        ["state", "sleep"],
+        ["client", "dreaming"],
+      ];
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.setCookies(newCookies);
+
+      const cookies = response.cookies;
+      assert.strictEqual(cookies["foo"], "bar");
+      assert.strictEqual(cookies["id"], "1234");
+      assert.strictEqual(cookies["state"], "sleep");
+      assert.strictEqual(cookies["client"], "dreaming");
+    });
+
+    it("should set the response headers correctly for request cookies and new cookies", () => {
+      request.headers = {
+        cookie: "foo=bar; id=1234",
+      };
+      const newCookies = [
+        ["state", "sleep"],
+        ["client", "dreaming"],
+      ];
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.setCookies(newCookies);
+
+      const headers = response.getHeaders();
+      assert.deepEqual(headers["set-cookie"], ["foo=bar", "id=1234", "state=sleep", "client=dreaming"]);
+    });
+
+    it("should not have any headers when there are no cookies to clear", () => {
+      request.headers = { cookie: "" };
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.clearCookies();
+
+      const headers = response.getHeaders();
+      assert.isDefined(headers);
+      assert.doesNotHaveAnyKeys(headers, ["set-cookie"]);
+    });
+
+    it("should reset each cookie in the request header", () => {
+      request.headers = {
+        cookie: "foo=bar; id=1234",
+      };
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.clearCookies();
+
+      const headers = response.getHeaders();
+      assert.hasAnyKeys(headers, ["set-cookie"]);
+      assert.deepEqual(headers["set-cookie"], ["foo=; Max-Age=0", "id=; Max-Age=0"]);
+    });
+
+    it("should clear cookies from the accessor", () => {
+      request.headers = {
+        cookie: "foo=bar; id=1234",
+      };
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.clearCookies();
+
+      assert.lengthOf(Object.keys(response.cookies), 0);
+    });
+
+    it("should clear only the specified cookie", () => {
+      request.headers = {
+        cookie: "foo=bar; id=1234",
+      };
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.clearCookie("foo");
+
+      const headers = response.getHeaders();
+      assert.deepEqual(headers["set-cookie"], ["foo=; Max-Age=0", "id=1234"]);
+    });
+
+    it("should set the status code to 307 when redirecting", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeHead = td.func();
+      response.redirect(REDIRECT_LOCATION);
+      expect(response.writeHead).to.have.been.calledWith(307);
+    });
+
+    it("should set a location for the redirect", () => {
+      const captor = td.matchers.captor();
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.setHeaders = td.func();
+
+      response.redirect(REDIRECT_LOCATION);
+      td.verify(response.setHeaders(captor.capture()));
+
+      expect(response.setHeaders).to.have.been.called;
+
+      const responseHeaders = captor.values[0];
+      expect(responseHeaders).to.be.an.instanceof(Map);
+      expect(responseHeaders).to.have.any.keys("location");
+      expect(responseHeaders.get("location")).to.equal(REDIRECT_LOCATION);
+    });
+
+    it("should retain the cookies set before the redirect", () => {
+      const captor = td.matchers.captor();
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.setHeaders = td.func();
+      response.setCookie("foo", "bar");
+      response.redirect(REDIRECT_LOCATION);
+      td.verify(response.setHeaders(captor.capture()));
+
+      const responseHeaders = captor.values[0];
+      expect(responseHeaders).to.be.an.instanceof(Map);
+      expect(responseHeaders).to.have.any.keys("set-cookie");
+      expect(responseHeaders.get("set-cookie")).to.deep.equal(["foo=bar"]);
+    });
+
+    it("should close the response", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.end = td.func();
+
+      response.redirect(REDIRECT_LOCATION);
+
+      expect(response.end).to.have.been.called;
+    });
+
+    it("should write JSON into the response stream", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeOutput = td.func();
+      const captor = td.matchers.captor();
+
+      const dataToSend = { foo: "bar" };
+      response.sendJson(dataToSend);
+      td.verify(response.writeOutput(captor.capture(), captor.capture()));
+
+      const [content, contentType] = [...captor.values];
+      expect(content).to.equal(JSON.stringify({ data: dataToSend }));
+      expect(contentType).to.equal("application/json");
+    });
+
+    it("should write HTML into the response stream", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeOutput = td.func();
+      const captor = td.matchers.captor();
+
+      const htmlToSend = "<html lang='en'><h1>Hello world</h1></html>";
+      response.sendHtml(htmlToSend);
+      td.verify(response.writeOutput(captor.capture(), captor.capture()));
+
+      const [content, contentType] = [...captor.values];
+      expect(content).to.equal(htmlToSend);
+      expect(contentType).to.equal("text/html");
+    });
+
+    it("should append HTTP headers and retain existing headers", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+
+      response.setHeader("content-type", "text/html");
+      response.appendHeaders([["etag", "12345678"]]);
+
+      const headers = response.getHeaders();
+      expect(headers["content-type"]).to.equal("text/html");
+      expect(headers["etag"]).to.equal("12345678");
+    });
+
+    it("should set a NOT FOUND status", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeHead = td.func();
+
+      response.setNotFound();
+      td.verify(response.writeHead(404, "Not Found"));
+    });
+
+    it("should set a BAD REQUEST status", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeHead = td.func();
+
+      response.setBadRequest();
+      td.verify(response.writeHead(400, "Bad Request"));
+    });
+
+    it("should set a INTERNAL SERVER ERROR status", () => {
+      const response = new HttpResponse(request, EMPTY_OPTIONS);
+      response.writeHead = td.func();
+
+      response.setServerError();
+      td.verify(response.writeHead(500, "Internal Server Error"));
     });
   });
 });

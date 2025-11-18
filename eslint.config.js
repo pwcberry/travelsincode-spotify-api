@@ -4,13 +4,16 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import mochaPlugin from "eslint-plugin-mocha";
 
 export default defineConfig([
-  globalIgnores(["node_modules"]),
+  globalIgnores(["node_modules", ".pnp.cjs", ".pnp.loader.mjs"]),
   {
     files: ["**/*.js"],
     extends: [js.configs.recommended],
     languageOptions: {
       ecmaVersion: 2021,
-      globals: globals.node,
+      globals: {
+        ...globals.node,
+        td: "readonly",
+      },
       parserOptions: {
         ecmaVersion: "latest",
         sourceType: "module",
