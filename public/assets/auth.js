@@ -18,4 +18,10 @@ function getBearer() {
   return "";
 }
 
-export { getBearer, hasCredentials };
+function login() {
+  const page = new URL(location.href);
+  const loginPage = new URL("login", page.origin);
+  location.href = loginPage.toString();
+}
+
+export { getBearer, hasCredentials, login };

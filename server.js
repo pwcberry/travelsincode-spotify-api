@@ -6,6 +6,8 @@ import { HttpRequest, HttpResponse } from "./lib/http.js";
 import getLogger from "./lib/log.js";
 import * as controller from "./lib/controller.js";
 import { loadAsset } from "./lib/asset.js";
+import { uploadData } from "./lib/upload.js";
+import * as upload from "./lib/upload.js";
 
 loadEnvFile();
 
@@ -38,6 +40,9 @@ function serve(port) {
         break;
       case "/callback":
         await controller.spotifyCallback(request, response);
+        break;
+      case "/upload":
+        await upload.uploadData(request, response);
         break;
       default:
         if (/^\/assets/.test(request.pathname)) {
