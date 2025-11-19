@@ -25,11 +25,30 @@ async function uploadData(data, fileName) {
   }
 }
 
+async function fetchAlbums() {
+  let result = await getMyAlbums(20);
+  let countdown = result.total;
+  let offset = 0;
+
+  while (countdown > 0) {
+    const filename = `albums-${offset.toString().padStart(3, "0")}.json`;
+    console.log("Uploading:", filename);
+    try {
+      await uploadData(result.albums, filename);
+      countdown -= result.limit;
+      offset += result.limit;
+      result = await getMyAlbums(20, offset);
+    } catch (error) {
+      console.error(error);
+      countdown = 0;
+    }
+  }
+}
+
 window.addEventListener("load", () => {
-  document.querySelector("button").addEventListener("click", async () => {
+  document.querySelector("#btn_albums").addEventListener("click", async () => {
     if (hasCredentials()) {
-      const albums = await getMyAlbums();
-      await uploadData(albums, "albums.json");
+      await fetchAlbums();
     } else {
       login();
     }
