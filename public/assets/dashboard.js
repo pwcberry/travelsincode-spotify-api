@@ -56,7 +56,7 @@ async function fetchMyShowsRaw() {
   let offset = 0;
 
   while (countdown > 0) {
-    const filename = `raw-shows-${offset.toString().padStart(3, "0")}.json`;
+    const filename = `raw/shows-${offset.toString().padStart(3, "0")}.json`;
 
     try {
       await uploadData(result, filename);
@@ -76,7 +76,7 @@ async function fetchMyPlaylistsRaw() {
   let offset = 0;
 
   while (countdown > 0) {
-    const filename = `raw-playlist-${offset.toString().padStart(3, "0")}.json`;
+    const filename = `raw/playlist-${offset.toString().padStart(3, "0")}.json`;
 
     try {
       await uploadData(result, filename);
@@ -96,7 +96,7 @@ async function fetchMyArtistsRaw() {
   let index = 0;
 
   while (countdown > 0) {
-    const filename = `raw-artist-${index.toString().padStart(3, "0")}.json`;
+    const filename = `raw/artist-${index.toString().padStart(3, "0")}.json`;
 
     try {
       await uploadData(result, filename);
@@ -116,7 +116,7 @@ async function fetchMyAlbumsRaw() {
   params.append("size", "20");
   params.append("offset", "10");
   const result = await apiGet("./me/albums", { params });
-  const filename = "raw-albums.json";
+  const filename = "raw/albums.json";
   try {
     await uploadData(result, filename);
   } catch (error) {
@@ -141,7 +141,7 @@ async function fetchMyPlaylistTracksRaw(playlistId) {
   let offset = 0;
 
   while (countdown > 0) {
-    const filename = `playlist-${playlistId}-${offset.toString().padStart(3, "0")}.json`;
+    const filename = `raw/playlist-${playlistId}-${offset.toString().padStart(3, "0")}.json`;
 
     try {
       await uploadData(result, filename);
