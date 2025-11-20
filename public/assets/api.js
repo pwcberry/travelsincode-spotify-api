@@ -26,4 +26,18 @@ async function apiGet(pathStem, options = {}) {
   }
 }
 
-export { apiGet };
+/**
+ * @param {string} playlistId
+ * @param {number} limit
+ * @param {number} [offset]
+ * @return {Promise<Object>}
+ */
+async function getPlaylistTracks(playlistId, limit, offset = 0) {
+  const params = new URLSearchParams();
+  params.append("limit", limit.toString());
+  params.append("offset", offset.toString());
+  // TODO: Map to slim object
+  return await apiGet(`./playlists/${playlistId}/tracks`, { params });
+}
+
+export { apiGet, getPlaylistTracks };
